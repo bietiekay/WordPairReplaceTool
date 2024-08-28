@@ -1,7 +1,7 @@
-<!DOCTYPE html><html><head><base href="https://websimcreation.com/wordpair-replacer/">
+<html><head><base href="https://websimcreation.com/wordpair-replacer/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Replacer with Undo Function</title>
+    <title>Text Replacer with Help Menu</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -157,11 +157,17 @@
         .move-buttons button:hover {
             background-color: #7f8c8d;
         }
+        .top-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
         .quick-replace {
+            flex-grow: 1;
             background-color: #ffffff;
             padding: 15px;
             border-radius: 4px;
-            margin-bottom: 15px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .quick-replace h3 {
@@ -186,6 +192,64 @@
             background-color: #d2b4de;
             cursor: not-allowed;
         }
+        .help-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            margin-left: 15px;
+        }
+        .help-icon {
+            width: 40px;
+            height: 40px;
+            background-color: #3498db;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .help-icon:hover {
+            background-color: #2980b9;
+            transform: scale(1.1);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 5px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -197,6 +261,8 @@
                 Currently selected: <span id="selectedSetName">None</span>
             </div>
             
+            <div id="setList"></div>
+
             <div id="setCreator">
                 <h2>Create New Set</h2>
                 <input type="text" id="setName" placeholder="Enter set name">
@@ -220,8 +286,6 @@
                 <button onclick="saveEditedSet()">Save Changes</button>
             </div>
 
-            <div id="setList"></div>
-
             <div class="import-export">
                 <h2>Import/Export</h2>
                 <button onclick="exportData()">Export Data</button>
@@ -231,12 +295,17 @@
         </div>
 
         <div class="main-content">
-            <div class="quick-replace">
-                <h3>Quick Replace</h3>
-                <div class="compact-input">
-                    <input type="text" id="quickText1" placeholder="Text to replace">
-                    <input type="text" id="quickText2" placeholder="Replacement text">
-                    <button id="quickReplaceButton" onclick="quickReplace()">Quick Replace</button>
+            <div class="top-section">
+                <div class="quick-replace">
+                    <h3>Quick Replace</h3>
+                    <div class="compact-input">
+                        <input type="text" id="quickText1" placeholder="Text to replace">
+                        <input type="text" id="quickText2" placeholder="Replacement text">
+                        <button id="quickReplaceButton" onclick="quickReplace()">Quick Replace</button>
+                    </div>
+                </div>
+                <div class="help-section">
+                    <div class="help-icon" onclick="openHelpModal()">?</div>
                 </div>
             </div>
             
@@ -245,8 +314,32 @@
             <div class="button-group">
                 <button onclick="replaceText()">Replace (with set)</button>
                 <button id="copyButton" onclick="copyToClipboard()">Copy to Clipboard</button>
-                <button id="undoButton" onclick="undoLastAction()" disabled="">Undo</button>
+                <button id="undoButton" onclick="undoLastAction()" disabled>Undo</button>
             </div>
+        </div>
+    </div>
+
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeHelpModal()">&times;</span>
+            <h2>Help: How to Use the Text Replacer</h2>
+            <p>Welcome to the Text Replacer! This app allows you to quickly replace words or phrases in your text using predefined sets or quick replace functionality.</p>
+            <h3>Key Features:</h3>
+            <ul>
+                <li><strong>Create Sets:</strong> Create sets of text pairs for bulk replacements.</li>
+                <li><strong>Quick Replace:</strong> Quickly replace single words or phrases without creating a set.</li>
+                <li><strong>Undo Function:</strong> Easily undo your last action.</li>
+                <li><strong>Import/Export:</strong> Save and load your replacement sets.</li>
+            </ul>
+            <h3>How to Use:</h3>
+            <ol>
+                <li>Enter your text in the main text area.</li>
+                <li>Create a set of replacements or use the quick replace feature.</li>
+                <li>Click "Replace" to apply your changes.</li>
+                <li>Use the "Undo" button if needed.</li>
+                <li>Copy your modified text to the clipboard when done.</li>
+            </ol>
+            <p>Experiment with different replacement sets to quickly transform your text!</p>
         </div>
     </div>
 
@@ -546,6 +639,21 @@
                 saveTextState(); // Save the state after replacing
             } else {
                 alert('Please enter both texts for quick replace');
+            }
+        }
+
+        function openHelpModal() {
+            document.getElementById('helpModal').style.display = 'block';
+        }
+
+        function closeHelpModal() {
+            document.getElementById('helpModal').style.display = 'none';
+        }
+
+        // Close the modal when clicking outside of it
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('helpModal')) {
+                closeHelpModal();
             }
         }
     </script>

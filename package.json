@@ -4,12 +4,26 @@
   "description": "This application helps you efficiently replace words or phrases in your text using either predefined sets or a quick replace functionality. Whether you're editing a document, performing bulk replacements, or just experimenting with text transformations, this tool is built to make the process fast, intuitive, and flexible.",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "electron-forge start",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "author": "Daniel Kirstenpfad",
   "license": "BSD-2-Clause",
   "devDependencies": {
-    "electron": "^32.0.1"
+    "@electron-forge/cli": "^7.4.0",
+    "@electron-forge/maker-deb": "^7.4.0",
+    "@electron-forge/maker-rpm": "^7.4.0",
+    "@electron-forge/maker-squirrel": "^7.4.0",
+    "@electron-forge/maker-zip": "^7.4.0",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.4.0",
+    "@electron-forge/plugin-fuses": "^7.4.0",
+    "@electron/fuses": "^1.8.0",
+    "electron": "^32.0.1",
+    "rpmbuild": "^0.0.23"
+  },
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.1"
   }
 }

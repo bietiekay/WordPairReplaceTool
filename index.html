@@ -1,7 +1,7 @@
 <html><head><base href="https://websimcreation.com/wordpair-replacer/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WordPair Replacer</title>
+    <title>WordPair Replacer with Local Storage</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -91,6 +91,15 @@
         let sets = {};
         let currentSet = null;
 
+        // Load sets from local storage when the page loads
+        window.onload = function() {
+            const storedSets = localStorage.getItem('wordPairSets');
+            if (storedSets) {
+                sets = JSON.parse(storedSets);
+                updateSetList();
+            }
+        };
+
         function addWordPair() {
             const word1 = document.getElementById('word1').value.trim();
             const word2 = document.getElementById('word2').value.trim();
@@ -111,6 +120,8 @@
         function saveSet() {
             if (currentSet && currentSet.pairs.length > 0) {
                 sets[currentSet.name] = currentSet;
+                // Save to local storage
+                localStorage.setItem('wordPairSets', JSON.stringify(sets));
                 currentSet = null;
                 updateSetList();
                 document.getElementById('setName').value = '';
@@ -177,6 +188,8 @@
 
         function deleteSet(setName) {
             delete sets[setName];
+            // Update local storage after deletion
+            localStorage.setItem('wordPairSets', JSON.stringify(sets));
             updateSetList();
         }
 

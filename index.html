@@ -137,6 +137,14 @@
         #copyButton:hover {
             background-color: #27ae60;
         }
+        .import-export {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #bdc3c7;
+        }
+        #fileInput {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -172,6 +180,13 @@
             </div>
 
             <div id="setList"></div>
+
+            <div class="import-export">
+                <h2>Import/Export</h2>
+                <button onclick="exportData()">Export Data</button>
+                <input type="file" id="fileInput" accept=".json" onchange="importData()">
+                <button onclick="document.getElementById('fileInput').click()">Import Data</button>
+            </div>
         </div>
 
         <div class="main-content">
@@ -367,6 +382,39 @@
             setTimeout(() => {
                 copyButton.textContent = originalText;
             }, 2000);
+        }
+
+        function exportData() {
+            const data = JSON.stringify(sets);
+            const blob = new Blob([data], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'text_replacer_data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importData() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        sets = importedData;
+                        localStorage.setItem('textReplacerSets', JSON.stringify(sets));
+                        updateSetList();
+                        alert('Data imported successfully!');
+                    } catch (error) {
+                        alert('Error importing data. Please make sure the file is valid.');
+                    }
+                };
+                reader.readAsText(file);
+            }
         }
     </script>
 </body>

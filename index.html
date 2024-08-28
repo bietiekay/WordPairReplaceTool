@@ -1,7 +1,7 @@
 <html><head><base href="https://websimcreation.com/wordpair-replacer/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WordPair Replacer with Enhanced UI</title>
+    <title>WordPair Replacer with Local Storage</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -33,8 +33,9 @@
         }
         h1 {
             font-size: 24px;
-            border-bottom: 2px solid #3498db;
+            text-align: center;
             padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
         }
         h2 {
             font-size: 20px;
@@ -54,12 +55,16 @@
         }
         button {
             background-color: #3498db;
-            color: white;
             border: none;
+            color: white;
             padding: 10px 15px;
-            border-radius: 4px;
-            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
             font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
             transition: background-color 0.3s;
         }
         button:hover {
@@ -87,15 +92,12 @@
             margin-right: 10px;
         }
         .wordPair button {
-            background-color: #e74c3c;
             padding: 5px 10px;
             font-size: 12px;
+            background-color: #e74c3c;
         }
         .wordPair button:hover {
             background-color: #c0392b;
-        }
-        #setList .set button {
-            margin-right: 5px;
         }
     </style>
 </head>
@@ -115,7 +117,7 @@
 
             <div id="setList"></div>
         </div>
-        
+
         <div class="main-content">
             <h2>Text Replacer</h2>
             <textarea id="inputText" placeholder="Enter your text here"></textarea>
@@ -127,6 +129,7 @@
         let sets = {};
         let currentSet = null;
 
+        // Load sets from local storage when the page loads
         window.onload = function() {
             const storedSets = localStorage.getItem('wordPairSets');
             if (storedSets) {
@@ -155,6 +158,7 @@
         function saveSet() {
             if (currentSet && currentSet.pairs.length > 0) {
                 sets[currentSet.name] = currentSet;
+                // Save to local storage
                 localStorage.setItem('wordPairSets', JSON.stringify(sets));
                 currentSet = null;
                 updateSetList();
@@ -222,6 +226,7 @@
 
         function deleteSet(setName) {
             delete sets[setName];
+            // Update local storage after deletion
             localStorage.setItem('wordPairSets', JSON.stringify(sets));
             updateSetList();
         }

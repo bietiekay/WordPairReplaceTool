@@ -1,7 +1,7 @@
 <html><head><base href="https://websimcreation.com/wordpair-replacer/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WordPair Replacer with Set Editing</title>
+    <title>Text Replacer with Multi-word Support</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -15,7 +15,7 @@
             height: 100vh;
         }
         .sidebar {
-            width: 300px;
+            width: 350px;
             background-color: #ffffff;
             box-shadow: 2px 0 5px rgba(0,0,0,0.1);
             padding: 20px;
@@ -52,6 +52,7 @@
         textarea {
             flex-grow: 1;
             resize: none;
+            height: 100px;
         }
         button {
             background-color: #3498db;
@@ -81,22 +82,24 @@
             margin-top: 0;
             color: #2c3e50;
         }
-        .wordPair {
+        .textPair {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            margin-bottom: 10px;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .textPair span {
             margin-bottom: 5px;
         }
-        .wordPair span {
-            flex-grow: 1;
-            margin-right: 10px;
-        }
-        .wordPair button {
+        .textPair button {
+            align-self: flex-end;
             padding: 5px 10px;
             font-size: 12px;
             background-color: #e74c3c;
         }
-        .wordPair button:hover {
+        .textPair button:hover {
             background-color: #c0392b;
         }
         #setEditor {
@@ -107,23 +110,23 @@
 <body>
     <div class="container">
         <div class="sidebar">
-            <h1>WordPair Replacer</h1>
+            <h1>Text Replacer</h1>
             
             <div id="setCreator">
                 <h2>Create New Set</h2>
                 <input type="text" id="setName" placeholder="Enter set name">
-                <input type="text" id="word1" placeholder="Word 1">
-                <input type="text" id="word2" placeholder="Word 2">
-                <button onclick="addWordPair()">Add Word Pair</button>
+                <textarea id="text1" placeholder="Text to replace"></textarea>
+                <textarea id="text2" placeholder="Replacement text"></textarea>
+                <button onclick="addTextPair()">Add Text Pair</button>
                 <button onclick="saveSet()">Save Set</button>
             </div>
 
             <div id="setEditor">
                 <h2>Edit Set</h2>
                 <h3 id="editingSetName"></h3>
-                <input type="text" id="editWord1" placeholder="Word 1">
-                <input type="text" id="editWord2" placeholder="Word 2">
-                <button onclick="addWordPairToExisting()">Add Word Pair</button>
+                <textarea id="editText1" placeholder="Text to replace"></textarea>
+                <textarea id="editText2" placeholder="Replacement text"></textarea>
+                <button onclick="addTextPairToExisting()">Add Text Pair</button>
                 <div id="existingPairs"></div>
                 <button onclick="saveEditedSet()">Save Changes</button>
             </div>
@@ -144,27 +147,27 @@
 
         // Load sets from local storage when the page loads
         window.onload = function() {
-            const storedSets = localStorage.getItem('wordPairSets');
+            const storedSets = localStorage.getItem('textReplacerSets');
             if (storedSets) {
                 sets = JSON.parse(storedSets);
                 updateSetList();
             }
         };
 
-        function addWordPair() {
-            const word1 = document.getElementById('word1').value.trim();
-            const word2 = document.getElementById('word2').value.trim();
+        function addTextPair() {
+            const text1 = document.getElementById('text1').value.trim();
+            const text2 = document.getElementById('text2').value.trim();
             
-            if (word1 && word2) {
+            if (text1 && text2) {
                 if (!currentSet) {
                     currentSet = { name: document.getElementById('setName').value.trim() || 'Unnamed Set', pairs: [] };
                 }
-                currentSet.pairs.push([word1, word2]);
+                currentSet.pairs.push([text1, text2]);
                 updateSetDisplay();
-                document.getElementById('word1').value = '';
-                document.getElementById('word2').value = '';
+                document.getElementById('text1').value = '';
+                document.getElementById('text2').value = '';
             } else {
-                alert('Please enter both words');
+                alert('Please enter both texts');
             }
         }
 
@@ -172,23 +175,24 @@
             if (currentSet && currentSet.pairs.length > 0) {
                 sets[currentSet.name] = currentSet;
                 // Save to local storage
-                localStorage.setItem('wordPairSets', JSON.stringify(sets));
+                localStorage.setItem('textReplacerSets', JSON.stringify(sets));
                 currentSet = null;
                 updateSetList();
                 document.getElementById('setName').value = '';
-                document.getElementById('word1').value = '';
-                document.getElementById('word2').value = '';
+                document.getElementById('text1').value = '';
+                document.getElementById('text2').value = '';
                 document.getElementById('setCreator').querySelector('.set')?.remove();
             } else {
-                alert('Please add at least one word pair to the set');
+                alert('Please add at least one text pair to the set');
             }
         }
 
         function updateSetDisplay() {
             const setCreator = document.getElementById('setCreator');
             const pairsHtml = currentSet.pairs.map(pair => `
-                <div class="wordPair">
-                    <span>${pair[0]} ⇒ ${pair[1]}</span>
+                <div class="textPair">
+                    <span><strong>Replace:</strong> ${pair[0]}</span>
+                    <span><strong>With:</strong> ${pair[1]}</span>
                     <button onclick="removePair('${pair[0]}')">Remove</button>
                 </div>
             `).join('');
@@ -210,8 +214,8 @@
             }
         }
 
-        function removePair(word) {
-            currentSet.pairs = currentSet.pairs.filter(pair => pair[0] !== word);
+        function removePair(text) {
+            currentSet.pairs = currentSet.pairs.filter(pair => pair[0] !== text);
             updateSetDisplay();
         }
 
@@ -224,7 +228,12 @@
                 const setHtml = `
                     <div class="set">
                         <h3>${set.name}</h3>
-                        ${set.pairs.map(pair => `<div>${pair[0]} ⇒ ${pair[1]}</div>`).join('')}
+                        ${set.pairs.map(pair => `
+                            <div class="textPair">
+                                <span><strong>Replace:</strong> ${pair[0]}</span>
+                                <span><strong>With:</strong> ${pair[1]}</span>
+                            </div>
+                        `).join('')}
                         <button onclick="selectSet('${set.name}')">Select</button>
                         <button onclick="editSet('${set.name}')">Edit</button>
                         <button onclick="deleteSet('${set.name}')">Delete</button>
@@ -252,37 +261,38 @@
             existingPairs.innerHTML = '';
             currentSet.pairs.forEach(pair => {
                 const pairElement = document.createElement('div');
-                pairElement.className = 'wordPair';
+                pairElement.className = 'textPair';
                 pairElement.innerHTML = `
-                    <span>${pair[0]} ⇒ ${pair[1]}</span>
+                    <span><strong>Replace:</strong> ${pair[0]}</span>
+                    <span><strong>With:</strong> ${pair[1]}</span>
                     <button onclick="removeExistingPair('${pair[0]}')">Remove</button>
                 `;
                 existingPairs.appendChild(pairElement);
             });
         }
 
-        function addWordPairToExisting() {
-            const word1 = document.getElementById('editWord1').value.trim();
-            const word2 = document.getElementById('editWord2').value.trim();
+        function addTextPairToExisting() {
+            const text1 = document.getElementById('editText1').value.trim();
+            const text2 = document.getElementById('editText2').value.trim();
             
-            if (word1 && word2) {
-                currentSet.pairs.push([word1, word2]);
+            if (text1 && text2) {
+                currentSet.pairs.push([text1, text2]);
                 updateExistingPairs();
-                document.getElementById('editWord1').value = '';
-                document.getElementById('editWord2').value = '';
+                document.getElementById('editText1').value = '';
+                document.getElementById('editText2').value = '';
             } else {
-                alert('Please enter both words');
+                alert('Please enter both texts');
             }
         }
 
-        function removeExistingPair(word) {
-            currentSet.pairs = currentSet.pairs.filter(pair => pair[0] !== word);
+        function removeExistingPair(text) {
+            currentSet.pairs = currentSet.pairs.filter(pair => pair[0] !== text);
             updateExistingPairs();
         }
 
         function saveEditedSet() {
             sets[currentSet.name] = currentSet;
-            localStorage.setItem('wordPairSets', JSON.stringify(sets));
+            localStorage.setItem('textReplacerSets', JSON.stringify(sets));
             document.getElementById('setCreator').style.display = 'block';
             document.getElementById('setEditor').style.display = 'none';
             updateSetList();
@@ -291,8 +301,12 @@
         function deleteSet(setName) {
             delete sets[setName];
             // Update local storage after deletion
-            localStorage.setItem('wordPairSets', JSON.stringify(sets));
+            localStorage.setItem('textReplacerSets', JSON.stringify(sets));
             updateSetList();
+        }
+
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
 
         function replaceText() {
@@ -305,7 +319,7 @@
             
             currentSet.pairs.forEach(pair => {
                 const [from, to] = pair;
-                const regex = new RegExp(from, 'gi');
+                const regex = new RegExp(escapeRegExp(from), 'gi');
                 inputText = inputText.replace(regex, to);
             });
 

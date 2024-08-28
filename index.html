@@ -39,11 +39,12 @@
         }
         h2 {
             font-size: 20px;
-            margin-top: 30px;
+            margin-top: 20px;
+            margin-bottom: 15px;
         }
         input[type="text"], textarea {
             width: 100%;
-            padding: 10px;
+            padding: 8px;
             margin-bottom: 10px;
             border: 1px solid #bdc3c7;
             border-radius: 4px;
@@ -58,7 +59,7 @@
             background-color: #3498db;
             border: none;
             color: white;
-            padding: 10px 15px;
+            padding: 8px 12px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
@@ -74,28 +75,31 @@
         .set {
             background-color: #ecf0f1;
             border: 1px solid #bdc3c7;
-            padding: 15px;
+            padding: 12px;
             margin-bottom: 15px;
             border-radius: 4px;
         }
         .set h3 {
             margin-top: 0;
             color: #2c3e50;
+            font-size: 18px;
         }
         .textPair {
             display: flex;
-            flex-direction: column;
-            margin-bottom: 10px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
             background-color: #fff;
-            padding: 10px;
+            padding: 8px;
             border-radius: 4px;
+            font-size: 14px;
         }
         .textPair span {
-            margin-bottom: 5px;
+            flex: 1;
+            margin-right: 10px;
         }
         .textPair button {
-            align-self: flex-end;
-            padding: 5px 10px;
+            padding: 4px 8px;
             font-size: 12px;
             background-color: #e74c3c;
         }
@@ -105,6 +109,34 @@
         #setEditor {
             display: none;
         }
+        #currentSetDisplay {
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        .compact-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .compact-input input, .compact-input textarea {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        .compact-input button {
+            align-self: flex-end;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        #copyButton {
+            background-color: #2ecc71;
+        }
+        #copyButton:hover {
+            background-color: #27ae60;
+        }
     </style>
 </head>
 <body>
@@ -112,21 +144,29 @@
         <div class="sidebar">
             <h1>Text Replacer</h1>
             
+            <div id="currentSetDisplay">
+                Currently selected: <span id="selectedSetName">None</span>
+            </div>
+            
             <div id="setCreator">
                 <h2>Create New Set</h2>
                 <input type="text" id="setName" placeholder="Enter set name">
-                <textarea id="text1" placeholder="Text to replace"></textarea>
-                <textarea id="text2" placeholder="Replacement text"></textarea>
-                <button onclick="addTextPair()">Add Text Pair</button>
+                <div class="compact-input">
+                    <input type="text" id="text1" placeholder="Text to replace">
+                    <input type="text" id="text2" placeholder="Replacement text">
+                    <button onclick="addTextPair()">Add</button>
+                </div>
                 <button onclick="saveSet()">Save Set</button>
+                <div id="currentSetPairs"></div>
             </div>
 
             <div id="setEditor">
-                <h2>Edit Set</h2>
-                <h3 id="editingSetName"></h3>
-                <textarea id="editText1" placeholder="Text to replace"></textarea>
-                <textarea id="editText2" placeholder="Replacement text"></textarea>
-                <button onclick="addTextPairToExisting()">Add Text Pair</button>
+                <h2>Edit Set: <span id="editingSetName"></span></h2>
+                <div class="compact-input">
+                    <input type="text" id="editText1" placeholder="Text to replace">
+                    <input type="text" id="editText2" placeholder="Replacement text">
+                    <button onclick="addTextPairToExisting()">Add</button>
+                </div>
                 <div id="existingPairs"></div>
                 <button onclick="saveEditedSet()">Save Changes</button>
             </div>
@@ -137,7 +177,10 @@
         <div class="main-content">
             <h2>Text Replacer</h2>
             <textarea id="inputText" placeholder="Enter your text here"></textarea>
-            <button onclick="replaceText()">Replace Text</button>
+            <div class="button-group">
+                <button onclick="replaceText()">Replace Text</button>
+                <button id="copyButton" onclick="copyToClipboard()">Copy to Clipboard</button>
+            </div>
         </div>
     </div>
 
@@ -174,44 +217,28 @@
         function saveSet() {
             if (currentSet && currentSet.pairs.length > 0) {
                 sets[currentSet.name] = currentSet;
-                // Save to local storage
                 localStorage.setItem('textReplacerSets', JSON.stringify(sets));
                 currentSet = null;
                 updateSetList();
                 document.getElementById('setName').value = '';
                 document.getElementById('text1').value = '';
                 document.getElementById('text2').value = '';
-                document.getElementById('setCreator').querySelector('.set')?.remove();
+                document.getElementById('currentSetPairs').innerHTML = '';
             } else {
                 alert('Please add at least one text pair to the set');
             }
         }
 
         function updateSetDisplay() {
-            const setCreator = document.getElementById('setCreator');
+            const currentSetPairs = document.getElementById('currentSetPairs');
             const pairsHtml = currentSet.pairs.map(pair => `
                 <div class="textPair">
-                    <span><strong>Replace:</strong> ${pair[0]}</span>
-                    <span><strong>With:</strong> ${pair[1]}</span>
+                    <span>${pair[0]} ➔ ${pair[1]}</span>
                     <button onclick="removePair('${pair[0]}')">Remove</button>
                 </div>
             `).join('');
             
-            const displayHtml = `
-                <h3>${currentSet.name}</h3>
-                ${pairsHtml}
-            `;
-            
-            const displayElement = document.createElement('div');
-            displayElement.className = 'set';
-            displayElement.innerHTML = displayHtml;
-            
-            const existingDisplay = setCreator.querySelector('.set');
-            if (existingDisplay) {
-                setCreator.replaceChild(displayElement, existingDisplay);
-            } else {
-                setCreator.appendChild(displayElement);
-            }
+            currentSetPairs.innerHTML = pairsHtml;
         }
 
         function removePair(text) {
@@ -228,12 +255,12 @@
                 const setHtml = `
                     <div class="set">
                         <h3>${set.name}</h3>
-                        ${set.pairs.map(pair => `
+                        ${set.pairs.slice(0, 3).map(pair => `
                             <div class="textPair">
-                                <span><strong>Replace:</strong> ${pair[0]}</span>
-                                <span><strong>With:</strong> ${pair[1]}</span>
+                                <span>${pair[0]} ➔ ${pair[1]}</span>
                             </div>
                         `).join('')}
+                        ${set.pairs.length > 3 ? `<div>... and ${set.pairs.length - 3} more</div>` : ''}
                         <button onclick="selectSet('${set.name}')">Select</button>
                         <button onclick="editSet('${set.name}')">Edit</button>
                         <button onclick="deleteSet('${set.name}')">Delete</button>
@@ -245,7 +272,7 @@
 
         function selectSet(setName) {
             currentSet = sets[setName];
-            alert(`Selected set: ${setName}`);
+            document.getElementById('selectedSetName').textContent = setName;
         }
 
         function editSet(setName) {
@@ -263,8 +290,7 @@
                 const pairElement = document.createElement('div');
                 pairElement.className = 'textPair';
                 pairElement.innerHTML = `
-                    <span><strong>Replace:</strong> ${pair[0]}</span>
-                    <span><strong>With:</strong> ${pair[1]}</span>
+                    <span>${pair[0]} ➔ ${pair[1]}</span>
                     <button onclick="removeExistingPair('${pair[0]}')">Remove</button>
                 `;
                 existingPairs.appendChild(pairElement);
@@ -296,13 +322,17 @@
             document.getElementById('setCreator').style.display = 'block';
             document.getElementById('setEditor').style.display = 'none';
             updateSetList();
+            document.getElementById('selectedSetName').textContent = currentSet.name;
         }
 
         function deleteSet(setName) {
             delete sets[setName];
-            // Update local storage after deletion
             localStorage.setItem('textReplacerSets', JSON.stringify(sets));
             updateSetList();
+            if (currentSet && currentSet.name === setName) {
+                currentSet = null;
+                document.getElementById('selectedSetName').textContent = 'None';
+            }
         }
 
         function escapeRegExp(string) {
@@ -324,6 +354,19 @@
             });
 
             document.getElementById('inputText').value = inputText;
+        }
+
+        function copyToClipboard() {
+            const textArea = document.getElementById('inputText');
+            textArea.select();
+            document.execCommand('copy');
+            
+            const copyButton = document.getElementById('copyButton');
+            const originalText = copyButton.textContent;
+            copyButton.textContent = 'Copied!';
+            setTimeout(() => {
+                copyButton.textContent = originalText;
+            }, 2000);
         }
     </script>
 </body>

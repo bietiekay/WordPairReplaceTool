@@ -1,0 +1,201 @@
+<html><head><base href="https://websimcreation.com/wordpair-replacer/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordPair Replacer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 5px;
+            margin-top: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #setList {
+            margin-top: 20px;
+        }
+        .set {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .set h3 {
+            margin-top: 0;
+        }
+        .wordPair {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WordPair Replacer</h1>
+        
+        <div id="setCreator">
+            <h2>Create New Set</h2>
+            <input type="text" id="setName" placeholder="Enter set name">
+            <input type="text" id="word1" placeholder="Word 1">
+            <input type="text" id="word2" placeholder="Word 2">
+            <button onclick="addWordPair()">Add Word Pair</button>
+            <button onclick="saveSet()">Save Set</button>
+        </div>
+
+        <div id="setList"></div>
+
+        <div id="textReplacer">
+            <h2>Text Replacer</h2>
+            <textarea id="inputText" rows="5" placeholder="Enter your text here"></textarea>
+            <button onclick="replaceText()">Replace Text</button>
+        </div>
+    </div>
+
+    <script>
+        let sets = {};
+        let currentSet = null;
+
+        function addWordPair() {
+            const word1 = document.getElementById('word1').value.trim();
+            const word2 = document.getElementById('word2').value.trim();
+            
+            if (word1 && word2) {
+                if (!currentSet) {
+                    currentSet = { name: document.getElementById('setName').value.trim() || 'Unnamed Set', pairs: [] };
+                }
+                currentSet.pairs.push([word1, word2]);
+                updateSetDisplay();
+                document.getElementById('word1').value = '';
+                document.getElementById('word2').value = '';
+            } else {
+                alert('Please enter both words');
+            }
+        }
+
+        function saveSet() {
+            if (currentSet && currentSet.pairs.length > 0) {
+                sets[currentSet.name] = currentSet;
+                currentSet = null;
+                updateSetList();
+                document.getElementById('setName').value = '';
+                document.getElementById('word1').value = '';
+                document.getElementById('word2').value = '';
+            } else {
+                alert('Please add at least one word pair to the set');
+            }
+        }
+
+        function updateSetDisplay() {
+            const setCreator = document.getElementById('setCreator');
+            const pairsHtml = currentSet.pairs.map(pair => `
+                <div class="wordPair">
+                    <span>${pair[0]} ⇒ ${pair[1]}</span>
+                    <button onclick="removePair('${pair[0]}')">Remove</button>
+                </div>
+            `).join('');
+            
+            const displayHtml = `
+                <h3>${currentSet.name}</h3>
+                ${pairsHtml}
+            `;
+            
+            const displayElement = document.createElement('div');
+            displayElement.className = 'set';
+            displayElement.innerHTML = displayHtml;
+            
+            const existingDisplay = setCreator.querySelector('.set');
+            if (existingDisplay) {
+                setCreator.replaceChild(displayElement, existingDisplay);
+            } else {
+                setCreator.appendChild(displayElement);
+            }
+        }
+
+        function removePair(word) {
+            currentSet.pairs = currentSet.pairs.filter(pair => pair[0] !== word);
+            updateSetDisplay();
+        }
+
+        function updateSetList() {
+            const setList = document.getElementById('setList');
+            setList.innerHTML = '<h2>Saved Sets</h2>';
+            
+            for (const setName in sets) {
+                const set = sets[setName];
+                const setHtml = `
+                    <div class="set">
+                        <h3>${set.name}</h3>
+                        ${set.pairs.map(pair => `<div>${pair[0]} ⇒ ${pair[1]}</div>`).join('')}
+                        <button onclick="selectSet('${set.name}')">Select</button>
+                        <button onclick="deleteSet('${set.name}')">Delete</button>
+                    </div>
+                `;
+                setList.innerHTML += setHtml;
+            }
+        }
+
+        function selectSet(setName) {
+            currentSet = sets[setName];
+            alert(`Selected set: ${setName}`);
+        }
+
+        function deleteSet(setName) {
+            delete sets[setName];
+            updateSetList();
+        }
+
+        function replaceText() {
+            if (!currentSet) {
+                alert('Please select a set first');
+                return;
+            }
+
+            let inputText = document.getElementById('inputText').value;
+            
+            currentSet.pairs.forEach(pair => {
+                const [from, to] = pair;
+                const regex = new RegExp(from, 'gi');
+                inputText = inputText.replace(regex, to);
+            });
+
+            document.getElementById('inputText').value = inputText;
+        }
+    </script>
+</body>
+</html>

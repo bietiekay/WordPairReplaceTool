@@ -1,7 +1,7 @@
 <html><head><base href="https://websimcreation.com/wordpair-replacer/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Replacer with Multi-word Support and Sorting</title>
+    <title>Text Replacer with Undo Function</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -157,6 +157,35 @@
         .move-buttons button:hover {
             background-color: #7f8c8d;
         }
+        .quick-replace {
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .quick-replace h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            font-size: 18px;
+        }
+        #quickReplaceButton {
+            background-color: #e67e22;
+        }
+        #quickReplaceButton:hover {
+            background-color: #d35400;
+        }
+        #undoButton {
+            background-color: #9b59b6;
+        }
+        #undoButton:hover {
+            background-color: #8e44ad;
+        }
+        #undoButton:disabled {
+            background-color: #d2b4de;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -202,11 +231,21 @@
         </div>
 
         <div class="main-content">
+            <div class="quick-replace">
+                <h3>Quick Replace</h3>
+                <div class="compact-input">
+                    <input type="text" id="quickText1" placeholder="Text to replace">
+                    <input type="text" id="quickText2" placeholder="Replacement text">
+                    <button id="quickReplaceButton" onclick="quickReplace()">Quick Replace</button>
+                </div>
+            </div>
+            
             <h2>Text Replacer</h2>
             <textarea id="inputText" placeholder="Enter your text here"></textarea>
             <div class="button-group">
                 <button onclick="replaceText()">Replace Text</button>
                 <button id="copyButton" onclick="copyToClipboard()">Copy to Clipboard</button>
+                <button id="undoButton" onclick="undoLastAction()" disabled>Undo</button>
             </div>
         </div>
     </div>
@@ -214,6 +253,8 @@
     <script>
         let sets = {};
         let currentSet = null;
+        let textHistory = [];
+        const MAX_HISTORY = 10; // Maximum number of undo steps
 
         // Load sets from local storage when the page loads
         window.onload = function() {
@@ -222,6 +263,11 @@
                 sets = JSON.parse(storedSets);
                 updateSetList();
             }
+            
+            // Add event listener for input changes
+            document.getElementById('inputText').addEventListener('input', function() {
+                saveTextState();
+            });
         };
 
         function addTextPair() {
@@ -394,11 +440,38 @@
             return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
 
+        function saveTextState() {
+            const currentText = document.getElementById('inputText').value;
+            if (textHistory.length === 0 || currentText !== textHistory[textHistory.length - 1]) {
+                textHistory.push(currentText);
+                if (textHistory.length > MAX_HISTORY) {
+                    textHistory.shift();
+                }
+                updateUndoButton();
+            }
+        }
+
+        function updateUndoButton() {
+            const undoButton = document.getElementById('undoButton');
+            undoButton.disabled = textHistory.length <= 1;
+        }
+
+        function undoLastAction() {
+            if (textHistory.length > 1) {
+                textHistory.pop(); // Remove the current state
+                const previousText = textHistory[textHistory.length - 1];
+                document.getElementById('inputText').value = previousText;
+                updateUndoButton();
+            }
+        }
+
         function replaceText() {
             if (!currentSet) {
                 alert('Please select a set first');
                 return;
             }
+
+            saveTextState(); // Save the current state before replacing
 
             let inputText = document.getElementById('inputText').value;
             
@@ -409,6 +482,7 @@
             });
 
             document.getElementById('inputText').value = inputText;
+            saveTextState(); // Save the state after replacing
         }
 
         function copyToClipboard() {
@@ -454,6 +528,24 @@
                     }
                 };
                 reader.readAsText(file);
+            }
+        }
+
+        function quickReplace() {
+            const text1 = document.getElementById('quickText1').value.trim();
+            const text2 = document.getElementById('quickText2').value.trim();
+            
+            if (text1 && text2) {
+                saveTextState(); // Save the current state before replacing
+
+                let inputText = document.getElementById('inputText').value;
+                const regex = new RegExp(escapeRegExp(text1), 'gi');
+                inputText = inputText.replace(regex, text2);
+                document.getElementById('inputText').value = inputText;
+
+                saveTextState(); // Save the state after replacing
+            } else {
+                alert('Please enter both texts for quick replace');
             }
         }
     </script>

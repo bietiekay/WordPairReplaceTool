@@ -1,7 +1,7 @@
 <html><head><base href="https://websimcreation.com/wordpair-replacer/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Replacer with Multi-word Support</title>
+    <title>Text Replacer with Multi-word Support and Sorting</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -145,6 +145,18 @@
         #fileInput {
             display: none;
         }
+        .move-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .move-buttons button {
+            padding: 2px 5px;
+            font-size: 12px;
+            background-color: #95a5a6;
+        }
+        .move-buttons button:hover {
+            background-color: #7f8c8d;
+        }
     </style>
 </head>
 <body>
@@ -246,19 +258,33 @@
 
         function updateSetDisplay() {
             const currentSetPairs = document.getElementById('currentSetPairs');
-            const pairsHtml = currentSet.pairs.map(pair => `
+            const pairsHtml = currentSet.pairs.map((pair, index) => `
                 <div class="textPair">
                     <span>${pair[0]} ➔ ${pair[1]}</span>
-                    <button onclick="removePair('${pair[0]}')">Remove</button>
+                    <div class="move-buttons">
+                        ${index > 0 ? `<button onclick="movePair(${index}, -1)">▲</button>` : ''}
+                        ${index < currentSet.pairs.length - 1 ? `<button onclick="movePair(${index}, 1)">▼</button>` : ''}
+                        <button onclick="removePair(${index})">Remove</button>
+                    </div>
                 </div>
             `).join('');
             
             currentSetPairs.innerHTML = pairsHtml;
         }
 
-        function removePair(text) {
-            currentSet.pairs = currentSet.pairs.filter(pair => pair[0] !== text);
+        function removePair(index) {
+            currentSet.pairs.splice(index, 1);
             updateSetDisplay();
+        }
+
+        function movePair(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex >= 0 && newIndex < currentSet.pairs.length) {
+                const temp = currentSet.pairs[index];
+                currentSet.pairs[index] = currentSet.pairs[newIndex];
+                currentSet.pairs[newIndex] = temp;
+                updateSetDisplay();
+            }
         }
 
         function updateSetList() {
@@ -301,12 +327,16 @@
         function updateExistingPairs() {
             const existingPairs = document.getElementById('existingPairs');
             existingPairs.innerHTML = '';
-            currentSet.pairs.forEach(pair => {
+            currentSet.pairs.forEach((pair, index) => {
                 const pairElement = document.createElement('div');
                 pairElement.className = 'textPair';
                 pairElement.innerHTML = `
                     <span>${pair[0]} ➔ ${pair[1]}</span>
-                    <button onclick="removeExistingPair('${pair[0]}')">Remove</button>
+                    <div class="move-buttons">
+                        ${index > 0 ? `<button onclick="moveExistingPair(${index}, -1)">▲</button>` : ''}
+                        ${index < currentSet.pairs.length - 1 ? `<button onclick="moveExistingPair(${index}, 1)">▼</button>` : ''}
+                        <button onclick="removeExistingPair(${index})">Remove</button>
+                    </div>
                 `;
                 existingPairs.appendChild(pairElement);
             });
@@ -326,9 +356,19 @@
             }
         }
 
-        function removeExistingPair(text) {
-            currentSet.pairs = currentSet.pairs.filter(pair => pair[0] !== text);
+        function removeExistingPair(index) {
+            currentSet.pairs.splice(index, 1);
             updateExistingPairs();
+        }
+
+        function moveExistingPair(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex >= 0 && newIndex < currentSet.pairs.length) {
+                const temp = currentSet.pairs[index];
+                currentSet.pairs[index] = currentSet.pairs[newIndex];
+                currentSet.pairs[newIndex] = temp;
+                updateExistingPairs();
+            }
         }
 
         function saveEditedSet() {

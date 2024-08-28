@@ -1,7 +1,7 @@
 <html><head><base href="https://websimcreation.com/wordpair-replacer/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WordPair Replacer with Local Storage</title>
+    <title>WordPair Replacer with Set Editing</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -99,6 +99,9 @@
         .wordPair button:hover {
             background-color: #c0392b;
         }
+        #setEditor {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -113,6 +116,16 @@
                 <input type="text" id="word2" placeholder="Word 2">
                 <button onclick="addWordPair()">Add Word Pair</button>
                 <button onclick="saveSet()">Save Set</button>
+            </div>
+
+            <div id="setEditor">
+                <h2>Edit Set</h2>
+                <h3 id="editingSetName"></h3>
+                <input type="text" id="editWord1" placeholder="Word 1">
+                <input type="text" id="editWord2" placeholder="Word 2">
+                <button onclick="addWordPairToExisting()">Add Word Pair</button>
+                <div id="existingPairs"></div>
+                <button onclick="saveEditedSet()">Save Changes</button>
             </div>
 
             <div id="setList"></div>
@@ -165,6 +178,7 @@
                 document.getElementById('setName').value = '';
                 document.getElementById('word1').value = '';
                 document.getElementById('word2').value = '';
+                document.getElementById('setCreator').querySelector('.set')?.remove();
             } else {
                 alert('Please add at least one word pair to the set');
             }
@@ -212,6 +226,7 @@
                         <h3>${set.name}</h3>
                         ${set.pairs.map(pair => `<div>${pair[0]} ⇒ ${pair[1]}</div>`).join('')}
                         <button onclick="selectSet('${set.name}')">Select</button>
+                        <button onclick="editSet('${set.name}')">Edit</button>
                         <button onclick="deleteSet('${set.name}')">Delete</button>
                     </div>
                 `;
@@ -222,6 +237,55 @@
         function selectSet(setName) {
             currentSet = sets[setName];
             alert(`Selected set: ${setName}`);
+        }
+
+        function editSet(setName) {
+            currentSet = sets[setName];
+            document.getElementById('setCreator').style.display = 'none';
+            document.getElementById('setEditor').style.display = 'block';
+            document.getElementById('editingSetName').textContent = setName;
+            updateExistingPairs();
+        }
+
+        function updateExistingPairs() {
+            const existingPairs = document.getElementById('existingPairs');
+            existingPairs.innerHTML = '';
+            currentSet.pairs.forEach(pair => {
+                const pairElement = document.createElement('div');
+                pairElement.className = 'wordPair';
+                pairElement.innerHTML = `
+                    <span>${pair[0]} ⇒ ${pair[1]}</span>
+                    <button onclick="removeExistingPair('${pair[0]}')">Remove</button>
+                `;
+                existingPairs.appendChild(pairElement);
+            });
+        }
+
+        function addWordPairToExisting() {
+            const word1 = document.getElementById('editWord1').value.trim();
+            const word2 = document.getElementById('editWord2').value.trim();
+            
+            if (word1 && word2) {
+                currentSet.pairs.push([word1, word2]);
+                updateExistingPairs();
+                document.getElementById('editWord1').value = '';
+                document.getElementById('editWord2').value = '';
+            } else {
+                alert('Please enter both words');
+            }
+        }
+
+        function removeExistingPair(word) {
+            currentSet.pairs = currentSet.pairs.filter(pair => pair[0] !== word);
+            updateExistingPairs();
+        }
+
+        function saveEditedSet() {
+            sets[currentSet.name] = currentSet;
+            localStorage.setItem('wordPairSets', JSON.stringify(sets));
+            document.getElementById('setCreator').style.display = 'block';
+            document.getElementById('setEditor').style.display = 'none';
+            updateSetList();
         }
 
         function deleteSet(setName) {

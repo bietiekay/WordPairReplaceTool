@@ -1,6 +1,5 @@
 <!DOCTYPE html><html><head><base href="https://websimcreation.com/wordpair-replacer/">
     <meta charset="UTF-8">
-    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Text Replacer with Dark Mode</title>
     <style>
@@ -437,14 +436,17 @@
 
         // Load sets from local storage when the page loads
         window.onload = function() {
+            console.log('Page loaded');
             const storedSets = localStorage.getItem('textReplacerSets');
             if (storedSets) {
                 sets = JSON.parse(storedSets);
+                console.log('Loaded sets from local storage:', sets);
                 updateSetList();
             }
             
             // Add event listener for input changes
             document.getElementById('inputText').addEventListener('input', function() {
+                console.log('Input text changed');
                 saveTextState();
             });
 
@@ -462,12 +464,14 @@
         };
 
         function toggleDarkMode() {
+            console.log('Dark mode toggled');
             document.body.classList.toggle('dark-mode');
             const isDarkMode = document.body.classList.contains('dark-mode');
             localStorage.setItem('darkModeEnabled', isDarkMode);
         }
 
         function addTextPair() {
+            console.log('Adding text pair');
             const text1 = document.getElementById('text1').value.trim();
             const text2 = document.getElementById('text2').value.trim();
             
@@ -476,6 +480,7 @@
                     currentSet = { name: document.getElementById('setName').value.trim() || 'Unnamed Set', pairs: [] };
                 }
                 currentSet.pairs.push([text1, text2]);
+                console.log('Current set after adding pair:', currentSet);
                 updateSetDisplay();
                 document.getElementById('text1').value = '';
                 document.getElementById('text2').value = '';
@@ -485,9 +490,11 @@
         }
 
         function saveSet() {
+            console.log('Saving set');
             if (currentSet && currentSet.pairs.length > 0) {
                 sets[currentSet.name] = currentSet;
                 localStorage.setItem('textReplacerSets', JSON.stringify(sets));
+                console.log('Sets saved to local storage:', sets);
                 currentSet = null;
                 updateSetList();
                 document.getElementById('setName').value = '';
@@ -500,10 +507,11 @@
         }
 
         function updateSetDisplay() {
+            console.log('Updating set display');
             const currentSetPairs = document.getElementById('currentSetPairs');
             const pairsHtml = currentSet.pairs.map((pair, index) => `
                 <div class="textPair">
-                    <span>${pair[0]} ➔ ${pair[1]}</span>
+                    <span>${pair[0]} ➞ ${pair[1]}</span>
                     <div class="move-buttons">
                         ${index > 0 ? `<button onclick="movePair(${index}, -1)">▲</button>` : ''}
                         ${index < currentSet.pairs.length - 1 ? `<button onclick="movePair(${index}, 1)">▼</button>` : ''}
@@ -516,11 +524,13 @@
         }
 
         function removePair(index) {
+            console.log(`Removing pair at index ${index}`);
             currentSet.pairs.splice(index, 1);
             updateSetDisplay();
         }
 
         function movePair(index, direction) {
+            console.log(`Moving pair at index ${index} in direction ${direction}`);
             const newIndex = index + direction;
             if (newIndex >= 0 && newIndex < currentSet.pairs.length) {
                 const temp = currentSet.pairs[index];
@@ -531,6 +541,7 @@
         }
 
         function updateSetList() {
+            console.log('Updating set list');
             const setList = document.getElementById('setList');
             setList.innerHTML = '<h2>Saved Sets</h2>';
             
@@ -541,13 +552,13 @@
                         <h3>${set.name}</h3>
                         ${set.pairs.slice(0, 3).map(pair => `
                             <div class="textPair">
-                                <span>${pair[0]} ➔ ${pair[1]}</span>
+                                <span>${pair[0]} ➞ ${pair[1]}</span>
                             </div>
                         `).join('')}
                         ${set.pairs.length > 3 ? `<div>... and ${set.pairs.length - 3} more</div>` : ''}
                         <button onclick="selectSet('${set.name}')">Select</button>
                         <button onclick="editSet('${set.name}')">Edit</button>
-                        <button onclick="deleteSet('${set.name}')">Delete</button>
+                        <button onclick="if(confirm('Wirklich löschen?')) deleteSet('${set.name}')">Delete</button>
                     </div>
                 `;
                 setList.innerHTML += setHtml;
@@ -555,11 +566,13 @@
         }
 
         function selectSet(setName) {
+            console.log(`Selecting set: ${setName}`);
             currentSet = sets[setName];
             document.getElementById('selectedSetName').textContent = setName;
         }
 
         function editSet(setName) {
+            console.log(`Editing set: ${setName}`);
             currentSet = sets[setName];
             document.getElementById('setCreator').style.display = 'none';
             document.getElementById('setEditor').style.display = 'block';
@@ -568,13 +581,14 @@
         }
 
         function updateExistingPairs() {
+            console.log('Updating existing pairs for editing');
             const existingPairs = document.getElementById('existingPairs');
             existingPairs.innerHTML = '';
             currentSet.pairs.forEach((pair, index) => {
                 const pairElement = document.createElement('div');
                 pairElement.className = 'textPair';
                 pairElement.innerHTML = `
-                    <span>${pair[0]} ➔ ${pair[1]}</span>
+                    <span>${pair[0]} ➞ ${pair[1]}</span>
                     <div class="move-buttons">
                         ${index > 0 ? `<button onclick="moveExistingPair(${index}, -1)">▲</button>` : ''}
                         ${index < currentSet.pairs.length - 1 ? `<button onclick="moveExistingPair(${index}, 1)">▼</button>` : ''}
@@ -586,11 +600,13 @@
         }
 
         function addTextPairToExisting() {
+            console.log('Adding text pair to existing set');
             const text1 = document.getElementById('editText1').value.trim();
             const text2 = document.getElementById('editText2').value.trim();
             
             if (text1 && text2) {
                 currentSet.pairs.push([text1, text2]);
+                console.log('Current set after adding pair:', currentSet);
                 updateExistingPairs();
                 document.getElementById('editText1').value = '';
                 document.getElementById('editText2').value = '';
@@ -600,11 +616,13 @@
         }
 
         function removeExistingPair(index) {
+            console.log(`Removing existing pair at index ${index}`);
             currentSet.pairs.splice(index, 1);
             updateExistingPairs();
         }
 
         function moveExistingPair(index, direction) {
+            console.log(`Moving existing pair at index ${index} in direction ${direction}`);
             const newIndex = index + direction;
             if (newIndex >= 0 && newIndex < currentSet.pairs.length) {
                 const temp = currentSet.pairs[index];
@@ -615,8 +633,10 @@
         }
 
         function saveEditedSet() {
+            console.log('Saving edited set');
             sets[currentSet.name] = currentSet;
             localStorage.setItem('textReplacerSets', JSON.stringify(sets));
+            console.log('Sets saved to local storage:', sets);
             document.getElementById('setCreator').style.display = 'block';
             document.getElementById('setEditor').style.display = 'none';
             updateSetList();
@@ -624,6 +644,7 @@
         }
 
         function deleteSet(setName) {
+            console.log(`Deleting set: ${setName}`);
             delete sets[setName];
             localStorage.setItem('textReplacerSets', JSON.stringify(sets));
             updateSetList();
@@ -638,9 +659,11 @@
         }
 
         function saveTextState() {
+            console.log('Saving text state');
             const currentText = document.getElementById('inputText').value;
             if (textHistory.length === 0 || currentText !== textHistory[textHistory.length - 1]) {
                 textHistory.push(currentText);
+                console.log('Text history:', textHistory);
                 if (textHistory.length > MAX_HISTORY) {
                     textHistory.shift();
                 }
@@ -649,11 +672,13 @@
         }
 
         function updateUndoButton() {
+            console.log('Updating undo button state');
             const undoButton = document.getElementById('undoButton');
             undoButton.disabled = textHistory.length <= 1;
         }
 
         function undoLastAction() {
+            console.log('Undoing last action');
             if (textHistory.length > 1) {
                 textHistory.pop(); // Remove the current state
                 const previousText = textHistory[textHistory.length - 1];
@@ -663,6 +688,7 @@
         }
 
         function replaceText() {
+            console.log('Replacing text using current set');
             if (!currentSet) {
                 alert('Please select a set first');
                 return;
@@ -674,6 +700,7 @@
             
             currentSet.pairs.forEach(pair => {
                 const [from, to] = pair;
+                console.log(`Replacing "${from}" with "${to}"`);
                 const regex = new RegExp(escapeRegExp(from), 'gi');
                 inputText = inputText.replace(regex, to);
             });
@@ -683,6 +710,7 @@
         }
 
         function copyToClipboard() {
+            console.log('Copying text to clipboard');
             const textArea = document.getElementById('inputText');
             textArea.select();
             document.execCommand('copy');
@@ -696,6 +724,7 @@
         }
 
         function exportData() {
+            console.log('Exporting data');
             const data = JSON.stringify(sets);
             const blob = new Blob([data], {type: 'application/json'});
             const url = URL.createObjectURL(blob);
@@ -709,6 +738,7 @@
         }
 
         function importData() {
+            console.log('Importing data');
             const fileInput = document.getElementById('fileInput');
             const file = fileInput.files[0];
             if (file) {
@@ -716,11 +746,13 @@
                 reader.onload = function(e) {
                     try {
                         const importedData = JSON.parse(e.target.result);
+                        console.log('Imported data:', importedData);
                         sets = importedData;
                         localStorage.setItem('textReplacerSets', JSON.stringify(sets));
                         updateSetList();
                         alert('Data imported successfully!');
                     } catch (error) {
+                        console.error('Error importing data:', error);
                         alert('Error importing data. Please make sure the file is valid.');
                     }
                 };
@@ -729,6 +761,7 @@
         }
 
         function quickReplace() {
+            console.log('Quick replace triggered');
             const text1 = document.getElementById('quickText1').value.trim();
             const text2 = document.getElementById('quickText2').value.trim();
             
@@ -736,6 +769,7 @@
                 saveTextState(); // Save the current state before replacing
 
                 let inputText = document.getElementById('inputText').value;
+                console.log(`Replacing "${text1}" with "${text2}" using quick replace`);
                 const regex = new RegExp(escapeRegExp(text1), 'gi');
                 inputText = inputText.replace(regex, text2);
                 document.getElementById('inputText').value = inputText;
@@ -747,10 +781,12 @@
         }
 
         function openHelpModal() {
+            console.log('Opening help modal');
             document.getElementById('helpModal').style.display = 'block';
         }
 
         function closeHelpModal() {
+            console.log('Closing help modal');
             document.getElementById('helpModal').style.display = 'none';
         }
 

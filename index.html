@@ -479,11 +479,12 @@
                 if (!currentSet) {
                     currentSet = { name: document.getElementById('setName').value.trim() || 'Unnamed Set', pairs: [] };
                 }
-                currentSet.pairs.push([text1, text2]);
-                console.log('Current set after adding pair:', currentSet);
-                updateSetDisplay();
-                document.getElementById('text1').value = '';
-                document.getElementById('text2').value = '';
+                if (handleDuplicateText(text1, currentSet.pairs)) {
+                    currentSet.pairs.push([text1, text2]);
+                    updateSetDisplay();
+                    document.getElementById('text1').value = '';
+                    document.getElementById('text2').value = '';
+                }
             } else {
                 alert('Please enter both texts');
             }
@@ -605,11 +606,12 @@
             const text2 = document.getElementById('editText2').value.trim();
             
             if (text1 && text2) {
-                currentSet.pairs.push([text1, text2]);
-                console.log('Current set after adding pair:', currentSet);
-                updateExistingPairs();
-                document.getElementById('editText1').value = '';
-                document.getElementById('editText2').value = '';
+                if (handleDuplicateText(text1, currentSet.pairs)) {
+                    currentSet.pairs.push([text1, text2]);
+                    updateExistingPairs();
+                    document.getElementById('editText1').value = '';
+                    document.getElementById('editText2').value = '';
+                }
             } else {
                 alert('Please enter both texts');
             }
@@ -795,6 +797,19 @@
             if (event.target == document.getElementById('helpModal')) {
                 closeHelpModal();
             }
+        }
+
+        function handleDuplicateText(text1, pairs) {
+            const duplicateIndex = pairs.findIndex(pair => 
+                pair[0].toLowerCase() === text1.toLowerCase()
+            );
+
+            if (duplicateIndex !== -1) {
+                const existingPair = pairs[duplicateIndex];
+                alert(`"${text1}" already exists with replacement "${existingPair[1]}"`);
+                return false;
+            }
+            return true;
         }
     </script>
 

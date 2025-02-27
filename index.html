@@ -355,7 +355,6 @@
             white-space: pre-wrap;
             line-height: 1.4;
             font-family: inherit;
-            -webkit-user-modify: read-write-plaintext-only; /* Verhindert HTML-Einfügungen */
         }
         .dark-mode #editor {
             background-color: #2c3e50;
@@ -759,20 +758,56 @@
         }
 
         // Event Listener für das Highlighting während der Eingabe
-        document.getElementById('editor').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
+        document.getElementById('editor').addEventListener('input', function(e) {
+            const text = this.innerText;
+            const highlightedText = highlightBracketedText(text);
+            
+            if (text !== this.innerHTML) {
+                // Speichere aktuelle Cursor-Position
                 const selection = window.getSelection();
                 const range = selection.getRangeAt(0);
-                const br = document.createElement('br');
-                range.deleteContents();
-                range.insertNode(br);
-                range.setStartAfter(br);
-                range.setEndAfter(br);
-                selection.removeAllRanges();
-                selection.addRange(range);
-                this.normalize(); // Bereinigt den Text-Node
-                saveTextState();
+                
+                // Berechne die absolute Position im Text
+                const preCaretRange = range.cloneRange();
+                preCaretRange.selectNodeContents(this);
+                preCaretRange.setEnd(range.endContainer, range.endOffset);
+                const caretOffset = preCaretRange.toString().length;
+                
+                // Update HTML
+                this.innerHTML = highlightedText;
+                
+                // Finde die neue Position für den Cursor
+                const textNodes = [];
+                const walk = document.createTreeWalker(
+                    this,
+                    NodeFilter.SHOW_TEXT,
+                    null,
+                    false
+                );
+                
+                let node;
+                let charCount = 0;
+                let targetNode = null;
+                let targetOffset = 0;
+                
+                while ((node = walk.nextNode())) {
+                    const nodeLength = node.textContent.length;
+                    if (charCount + nodeLength >= caretOffset) {
+                        targetNode = node;
+                        targetOffset = caretOffset - charCount;
+                        break;
+                    }
+                    charCount += nodeLength;
+                }
+                
+                // Setze den Cursor
+                if (targetNode) {
+                    const newRange = document.createRange();
+                    newRange.setStart(targetNode, targetOffset);
+                    newRange.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(newRange);
+                }
             }
         });
 

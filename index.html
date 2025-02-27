@@ -17,8 +17,6 @@
         }
         .sidebar {
             width: 350px;
-            min-width: 350px;
-            max-width: 350px;
             background-color: #ffffff;
             box-shadow: 2px 0 5px rgba(0,0,0,0.1);
             padding: 20px;
@@ -60,9 +58,7 @@
         textarea {
             flex-grow: 1;
             resize: none;
-            height: calc(100vh - 200px);
-            white-space: pre-wrap;
-            line-height: 1.4;
+            height: 100px;
         }
         button {
             background-color: #3498db;
@@ -104,6 +100,15 @@
             border-radius: 4px;
             font-size: 14px;
             transition: background-color 0.3s;
+            cursor: move;
+        }
+        .textPair.drag-over {
+            border: 2px dashed #3498db;
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        .textPair.dragging {
+            opacity: 0.5;
+            background-color: #e8e8e8;
         }
         .textPair span {
             flex: 1;
@@ -330,37 +335,6 @@
         .dark-mode .close {
             color: #ecf0f1;
         }
-        /* Neue Styles für Syntax Highlighting */
-        .highlighted {
-            color: #0066ff; /* Neonblau für Light Mode */
-            text-shadow: 0 0 5px rgba(0, 102, 255, 0.5);
-        }
-        /* Dark Mode Override für Highlighting */
-        .dark-mode .highlighted {
-            color: #00ff9d; /* Neongrün für Dark Mode */
-            text-shadow: 0 0 5px rgba(0, 255, 157, 0.5);
-        }
-        /* Styles für den Editor */
-        #editor {
-            flex-grow: 1;
-            height: calc(100vh - 200px);
-            padding: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #bdc3c7;
-            border-radius: 4px;
-            font-size: 14px;
-            background-color: #fff;
-            color: #333;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            line-height: 1.4;
-            font-family: inherit;
-        }
-        .dark-mode #editor {
-            background-color: #2c3e50;
-            color: #ecf0f1;
-            border-color: #7f8c8d;
-        }
     </style>
 </head>
 <body>
@@ -428,7 +402,7 @@
             </div>
             
             <h2>Text Replacer</h2>
-            <div id="editor" contenteditable="true"></div>
+            <textarea id="inputText" placeholder="Enter your text here"></textarea>
             <div class="button-group">
                 <button onclick="replaceText()">Replace (with set)</button>
                 <button id="copyButton" onclick="copyToClipboard()">Copy to Clipboard</button>
@@ -480,7 +454,7 @@
             }
             
             // Add event listener for input changes
-            document.getElementById('editor').addEventListener('input', function() {
+            document.getElementById('inputText').addEventListener('input', function() {
                 console.log('Input text changed');
                 saveTextState();
             });
@@ -514,12 +488,11 @@
                 if (!currentSet) {
                     currentSet = { name: document.getElementById('setName').value.trim() || 'Unnamed Set', pairs: [] };
                 }
-                if (handleDuplicateText(text1, currentSet.pairs)) {
-                    currentSet.pairs.push([text1, text2]);
-                    updateSetDisplay();
-                    document.getElementById('text1').value = '';
-                    document.getElementById('text2').value = '';
-                }
+                currentSet.pairs.push([text1, text2]);
+                console.log('Current set after adding pair:', currentSet);
+                updateSetDisplay();
+                document.getElementById('text1').value = '';
+                document.getElementById('text2').value = '';
             } else {
                 alert('Please enter both texts');
             }
@@ -620,18 +593,32 @@
             console.log('Updating existing pairs for editing');
             const existingPairs = document.getElementById('existingPairs');
             existingPairs.innerHTML = '';
+            
+            // Create a container for the pairs that will handle the dragover event
+            const pairsContainer = document.createElement('div');
+            pairsContainer.addEventListener('dragover', handleDragOver);
+            existingPairs.appendChild(pairsContainer);
+
             currentSet.pairs.forEach((pair, index) => {
                 const pairElement = document.createElement('div');
                 pairElement.className = 'textPair';
+                pairElement.draggable = true;
+                pairElement.dataset.index = index; // Add index as data attribute
                 pairElement.innerHTML = `
                     <span>${pair[0]} ➞ ${pair[1]}</span>
                     <div class="move-buttons">
-                        ${index > 0 ? `<button onclick="moveExistingPair(${index}, -1)">▲</button>` : ''}
-                        ${index < currentSet.pairs.length - 1 ? `<button onclick="moveExistingPair(${index}, 1)">▼</button>` : ''}
                         <button onclick="removeExistingPair(${index})">Remove</button>
                     </div>
                 `;
-                existingPairs.appendChild(pairElement);
+
+                // Add drag event listeners
+                pairElement.addEventListener('dragstart', handleDragStart);
+                pairElement.addEventListener('dragend', handleDragEnd);
+                pairElement.addEventListener('dragenter', handleDragEnter);
+                pairElement.addEventListener('dragleave', handleDragLeave);
+                pairElement.addEventListener('drop', handleDrop);
+
+                pairsContainer.appendChild(pairElement);
             });
         }
 
@@ -641,12 +628,11 @@
             const text2 = document.getElementById('editText2').value.trim();
             
             if (text1 && text2) {
-                if (handleDuplicateText(text1, currentSet.pairs)) {
-                    currentSet.pairs.push([text1, text2]);
-                    updateExistingPairs();
-                    document.getElementById('editText1').value = '';
-                    document.getElementById('editText2').value = '';
-                }
+                currentSet.pairs.push([text1, text2]);
+                console.log('Current set after adding pair:', currentSet);
+                updateExistingPairs();
+                document.getElementById('editText1').value = '';
+                document.getElementById('editText2').value = '';
             } else {
                 alert('Please enter both texts');
             }
@@ -697,8 +683,7 @@
 
         function saveTextState() {
             console.log('Saving text state');
-            const editor = document.getElementById('editor');
-            const currentText = editor.innerHTML;
+            const currentText = document.getElementById('inputText').value;
             if (textHistory.length === 0 || currentText !== textHistory[textHistory.length - 1]) {
                 textHistory.push(currentText);
                 console.log('Text history:', textHistory);
@@ -718,9 +703,9 @@
         function undoLastAction() {
             console.log('Undoing last action');
             if (textHistory.length > 1) {
-                textHistory.pop();
+                textHistory.pop(); // Remove the current state
                 const previousText = textHistory[textHistory.length - 1];
-                document.getElementById('editor').innerHTML = previousText;
+                document.getElementById('inputText').value = previousText;
                 updateUndoButton();
             }
         }
@@ -732,12 +717,10 @@
                 return;
             }
 
-            saveTextState();
+            saveTextState(); // Save the current state before replacing
 
-            let editor = document.getElementById('editor');
-            let inputText = editor.innerText;
+            let inputText = document.getElementById('inputText').value;
             
-            // Erst die normalen Ersetzungen durchführen
             currentSet.pairs.forEach(pair => {
                 const [from, to] = pair;
                 console.log(`Replacing "${from}" with "${to}"`);
@@ -745,85 +728,22 @@
                 inputText = inputText.replace(regex, to);
             });
 
-            // Dann das Highlighting anwenden
-            inputText = highlightBracketedText(inputText);
-
-            editor.innerHTML = inputText;
-            saveTextState();
+            document.getElementById('inputText').value = inputText;
+            saveTextState(); // Save the state after replacing
         }
-
-        // Modifizierte Highlighting-Funktion
-        function highlightBracketedText(text) {
-            return text.replace(/\[\[(.*?)\]\]/g, '<span class="highlighted">[[$1]]</span>');
-        }
-
-        // Event Listener für das Highlighting während der Eingabe
-        document.getElementById('editor').addEventListener('input', function(e) {
-            const text = this.innerText;
-            const highlightedText = highlightBracketedText(text);
-            
-            if (text !== this.innerHTML) {
-                // Speichere aktuelle Cursor-Position
-                const selection = window.getSelection();
-                const range = selection.getRangeAt(0);
-                
-                // Berechne die absolute Position im Text
-                const preCaretRange = range.cloneRange();
-                preCaretRange.selectNodeContents(this);
-                preCaretRange.setEnd(range.endContainer, range.endOffset);
-                const caretOffset = preCaretRange.toString().length;
-                
-                // Update HTML
-                this.innerHTML = highlightedText;
-                
-                // Finde die neue Position für den Cursor
-                const textNodes = [];
-                const walk = document.createTreeWalker(
-                    this,
-                    NodeFilter.SHOW_TEXT,
-                    null,
-                    false
-                );
-                
-                let node;
-                let charCount = 0;
-                let targetNode = null;
-                let targetOffset = 0;
-                
-                while ((node = walk.nextNode())) {
-                    const nodeLength = node.textContent.length;
-                    if (charCount + nodeLength >= caretOffset) {
-                        targetNode = node;
-                        targetOffset = caretOffset - charCount;
-                        break;
-                    }
-                    charCount += nodeLength;
-                }
-                
-                // Setze den Cursor
-                if (targetNode) {
-                    const newRange = document.createRange();
-                    newRange.setStart(targetNode, targetOffset);
-                    newRange.collapse(true);
-                    selection.removeAllRanges();
-                    selection.addRange(newRange);
-                }
-            }
-        });
 
         function copyToClipboard() {
             console.log('Copying text to clipboard');
-            const editor = document.getElementById('editor');
-            const text = editor.innerText; // Nur den Text ohne HTML-Tags kopieren
+            const textArea = document.getElementById('inputText');
+            textArea.select();
+            document.execCommand('copy');
             
-            navigator.clipboard.writeText(text).then(() => {
-                const copyButton = document.getElementById('copyButton');
-                const originalText = copyButton.textContent;
-                copyButton.textContent = 'Copied!';
-                setTimeout(() => {
-                    copyButton.textContent = originalText;
-                }, 2000);
-            });
+            const copyButton = document.getElementById('copyButton');
+            const originalText = copyButton.textContent;
+            copyButton.textContent = 'Copied!';
+            setTimeout(() => {
+                copyButton.textContent = originalText;
+            }, 2000);
         }
 
         function exportData() {
@@ -865,18 +785,20 @@
 
         function quickReplace() {
             console.log('Quick replace triggered');
-            const text1 = document.getElementById('quickText1').value.trim();
-            const text2 = document.getElementById('quickText2').value.trim();
+            const text1 = document.getElementById('quickText1').value;
+            const text2 = document.getElementById('quickText2').value;
             
             if (text1 && text2) {
                 saveTextState(); // Save the current state before replacing
 
-                let inputText = document.getElementById('editor').innerText;
+                let inputText = document.getElementById('inputText').value;
                 console.log(`Replacing "${text1}" with "${text2}" using quick replace`);
-                const regex = new RegExp(escapeRegExp(text1), 'gi');
+                
+                // Create a regex that matches the exact string including whitespace
+                const regex = new RegExp(escapeRegExp(text1), 'g');
                 inputText = inputText.replace(regex, text2);
-                document.getElementById('editor').innerText = inputText;
-
+                
+                document.getElementById('inputText').value = inputText;
                 saveTextState(); // Save the state after replacing
             } else {
                 alert('Please enter both texts for quick replace');
@@ -900,17 +822,57 @@
             }
         }
 
-        function handleDuplicateText(text1, pairs) {
-            const duplicateIndex = pairs.findIndex(pair => 
-                pair[0].toLowerCase() === text1.toLowerCase()
-            );
+        let draggedItem = null;
+        let draggedIndex = null;
 
-            if (duplicateIndex !== -1) {
-                const existingPair = pairs[duplicateIndex];
-                alert(`"${text1}" already exists with replacement "${existingPair[1]}"`);
-                return false;
+        function handleDragStart(e) {
+            draggedItem = this;
+            draggedIndex = parseInt(this.dataset.index);
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            draggedItem = null;
+            draggedIndex = null;
+            
+            // Remove any remaining drag-related classes
+            document.querySelectorAll('.textPair').forEach(pair => {
+                pair.classList.remove('drag-over');
+            });
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+            if (this !== draggedItem) {
+                this.classList.add('drag-over');
             }
-            return true;
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            
+            if (draggedItem === this) return;
+            
+            const droppedIndex = parseInt(this.dataset.index);
+            
+            // Reorder the pairs in the currentSet
+            const [movedPair] = currentSet.pairs.splice(draggedIndex, 1);
+            currentSet.pairs.splice(droppedIndex, 0, movedPair);
+            
+            // Update the display
+            updateExistingPairs();
         }
     </script>
 

@@ -335,6 +335,31 @@
         .dark-mode .close {
             color: #ecf0f1;
         }
+        #transcriptMatchButton {
+            background-color: #16a085;
+        }
+        #transcriptMatchButton:hover {
+            background-color: #138d75;
+        }
+        .transcript-section {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #ecf0f1;
+            border-radius: 4px;
+            border: 1px solid #bdc3c7;
+        }
+        .transcript-section h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .transcript-section button {
+            width: 100%;
+        }
+        .dark-mode .transcript-section {
+            background-color: #34495e;
+            border-color: #7f8c8d;
+        }
     </style>
 </head>
 <body>
@@ -344,6 +369,11 @@
             
             <div id="currentSetDisplay">
                 Currently selected: <span id="selectedSetName">None</span>
+            </div>
+
+            <div class="transcript-section">
+                <h2>Transcript Tools</h2>
+                <button id="transcriptMatchButton" onclick="transcriptMatch()">Transcript Matching</button>
             </div>
             
             <div id="setList"></div>
@@ -873,6 +903,33 @@
             
             // Update the display
             updateExistingPairs();
+        }
+
+        function transcriptMatch() {
+            console.log('Transcript matching triggered');
+            saveTextState(); // Aktuellen Zustand speichern
+
+            let inputText = document.getElementById('inputText').value;
+            
+            // Verbesserter Regex der nur exakt das Format "Text, Text (Text)" matched
+            // ^ - Beginn des Matches
+            // [^,\n]+ - Beliebiger Text außer Komma und Zeilenumbruch (Nachname)
+            // ,\s+ - Komma gefolgt von Leerzeichen
+            // [^(\n]+ - Beliebiger Text außer öffnende Klammer und Zeilenumbruch (Vorname)
+            // \s*\([^)]*\) - Klammern mit beliebigem Inhalt
+            // $ - Ende des Matches
+            const regex = /(^|[^[])([^,\n]+),\s+([^(\n]+)\s*\([^)]*\)/g;
+            
+            // Text ersetzen
+            inputText = inputText.replace(regex, (match, prefix, nachname, vorname) => {
+                // Wenn der Match am Anfang steht, ist prefix leer, sonst enthält es das Zeichen vor dem Match
+                nachname = nachname.trim();
+                vorname = vorname.trim();
+                return `${prefix}[[${vorname} ${nachname}]]`;
+            });
+            
+            document.getElementById('inputText').value = inputText;
+            saveTextState(); // Neuen Zustand speichern
         }
     </script>
 

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vollbild Textbox</title>
+    <style>
+        /* Reset der Standard-Margins und Paddings */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Stellt sicher, dass HTML und Body die volle Höhe nutzen */
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+
+        /* Container für die Textbox */
+        .textbox-container {
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+        }
+
+        /* Styling für die Textbox selbst */
+        .fullscreen-textbox {
+            width: 100%;
+            height: 100%;
+            padding: 35px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            background-color: white;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .fullscreen-textbox:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0,123,255,0.5);
+        }
+
+        /* Styling für die markierten Bereiche */
+        .fullscreen-textbox mark {
+            background-color: rgba(255, 235, 59, 0.5);
+            border-radius: 2px;
+            padding: 2px 0;
+        }
+
+        /* Scrollbar-Styling */
+        .fullscreen-textbox::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .fullscreen-textbox::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .fullscreen-textbox::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 5px;
+        }
+
+        .fullscreen-textbox::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="textbox-container">
+        <div class="fullscreen-textbox" contenteditable="true"></div>
+    </div>
+
+    <script>
+        class FullscreenTextbox {
+            constructor(containerId = null) {
+                if (containerId) {
+                    this.init(containerId);
+                } else {
+                    this.initExisting();
+                }
+            }
+
+            initExisting() {
+                const editor = document.querySelector('.fullscreen-textbox');
+                this.setupHighlighting(editor);
+            }
+
+            init(containerId) {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+
+                container.className = 'textbox-container';
+                
+                const editor = document.createElement('div');
+                editor.className = 'fullscreen-textbox';
+                editor.contentEditable = true;
+                
+                container.appendChild(editor);
+                this.setupHighlighting(editor);
+                
+                return editor;
+            }
+
+            setupHighlighting(editor) {
+                editor.addEventListener('input', () => {
+                    const selection = window.getSelection();
+                    const range = selection.getRangeAt(0);
+                    const startOffset = range.startOffset;
+                    
+                    this.highlightBrackets(editor);
+                    
+                    // Stelle Cursor-Position wieder her
+                    this.setCursor(editor, startOffset);
+                });
+            }
+
+            highlightBrackets(editor) {
+                let text = editor.innerText;
+                let html = text.replace(/\[\[(.*?)\]\]/g, '<mark>[[$1]]</mark>');
+                
+                if (editor.innerHTML !== html) {
+                    editor.innerHTML = html;
+                }
+            }
+
+            setCursor(editor, offset) {
+                const selection = window.getSelection();
+                const range = document.createRange();
+                
+                // Finde die erste Textnode
+                let node = editor.firstChild;
+                while (node && node.nodeType !== 3) { // 3 = Text node
+                    node = node.firstChild;
+                }
+                
+                if (node) {
+                    range.setStart(node, Math.min(offset, node.length));
+                    range.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+            }
+
+            getText() {
+                return document.querySelector('.fullscreen-textbox').innerText;
+            }
+
+            setText(text) {
+                const editor = document.querySelector('.fullscreen-textbox');
+                editor.innerText = text;
+                this.highlightBrackets(editor);
+            }
+        }
+
+        // Automatische Initialisierung für die bestehende Textbox
+        const textbox = new FullscreenTextbox();
+    </script>
+</body>
+</html> 

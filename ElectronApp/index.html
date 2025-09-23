@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Replacer with Dark Mode</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h1>Text Replacer</h1>
+            
+            <div id="currentSetDisplay">
+                Currently selected: <span id="selectedSetName">None</span>
+            </div>
+
+            <div class="transcript-section">
+                <h2>Transcript Tools</h2>
+                <button id="transcriptMatchButton" onclick="transcriptMatch()">Transcript Matching</button>
+            </div>
+            
+            <div id="setList"></div>
+
+            <div id="setCreator">
+                <h2>Create New Set</h2>
+                <input type="text" id="setName" placeholder="Enter set name">
+                <div class="compact-input">
+                    <input type="text" id="text1" placeholder="Text to replace">
+                    <input type="text" id="text2" placeholder="Replacement text">
+                    <button onclick="addTextPair()">Add</button>
+                </div>
+                <button onclick="saveSet()">Save Set</button>
+                <div id="currentSetPairs"></div>
+            </div>
+
+            <div id="setEditor">
+                <h2>Edit Set: <span id="editingSetName"></span></h2>
+                <div class="compact-input">
+                    <input type="text" id="editText1" placeholder="Text to replace">
+                    <input type="text" id="editText2" placeholder="Replacement text">
+                    <button onclick="addTextPairToExisting()">Add</button>
+                </div>
+                <button onclick="saveEditedSet()">Save Changes</button>
+                <div id="existingPairs"></div>
+            </div>
+
+            <div class="import-export">
+                <h2>Import/Export</h2>
+                <button onclick="exportData()">Export Data</button>
+                <input type="file" id="fileInput" accept=".json" onchange="importData()">
+                <button onclick="document.getElementById('fileInput').click()">Import Data</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="top-section">
+                <div class="quick-replace">
+                    <h3>Quick Replace</h3>
+                    <div class="compact-input">
+                        <input type="text" id="quickText1" placeholder="Text to replace">
+                        <input type="text" id="quickText2" placeholder="Replacement text">
+                        <button id="quickReplaceButton" onclick="quickReplace()">Quick Replace</button>
+                    </div>
+                </div>
+                <div class="help-section">
+                    <div class="help-icon" onclick="openHelpModal()">?</div>
+                    <label class="dark-mode-toggle">
+                        <input type="checkbox" id="darkModeToggle">
+                        <span class="slider">
+                            <span class="sun-icon" style="position: absolute; left: 10%; top: 50%; transform: translateY(-50%);">☀️</span>
+                            <span class="moon-icon" style="position: absolute; right: 10%; top: 50%; transform: translateY(-50%);">🌙</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+            
+            <h2>Text Replacer</h2>
+            <textarea id="inputText" placeholder="Enter your text here"></textarea>
+            <div class="button-group">
+                <button onclick="replaceText()">Replace (with set)</button>
+                <button id="copyButton" onclick="copyToClipboard()">Copy to Clipboard</button>
+                <button id="undoButton" onclick="undoLastAction()" disabled="">Undo</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeHelpModal()">×</span>
+            <h2>Help: How to Use the Text Replacer</h2>
+            <p>Welcome to the Text Replacer! This app allows you to quickly replace words or phrases in your text using predefined sets or quick replace functionality.</p>
+            <h3>Key Features:</h3>
+            <ul>
+                <li><strong>Create Sets:</strong> Create sets of text pairs for bulk replacements.</li>
+                <li><strong>Quick Replace:</strong> Quickly replace single words or phrases without creating a set.</li>
+                <li><strong>Undo Function:</strong> Easily undo your last action.</li>
+                <li><strong>Import/Export:</strong> Save and load your replacement sets.</li>
+                <li><strong>Dark Mode:</strong> Toggle between light and dark modes for comfortable viewing.</li>
+            </ul>
+            <h3>How to Use:</h3>
+            <ol>
+                <li>Enter your text in the main text area.</li>
+                <li>Create a set of replacements or use the quick replace feature.</li>
+                <li>Click "Replace" to apply your changes.</li>
+                <li>Use the "Undo" button if needed.</li>
+                <li>Copy your modified text to the clipboard when done.</li>
+                <li>Use the dark mode toggle for a different visual experience.</li>
+            </ol>
+            <p>Experiment with different replacement sets to quickly transform your text!</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html> 

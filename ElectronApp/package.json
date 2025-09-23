@@ -1,0 +1,22 @@
+{
+  "name": "word-pair-replace-electron",
+  "version": "1.0.0",
+  "description": "A desktop version of the Word Pair Replace tool",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron ."
+  },
+  "keywords": [
+    "electron",
+    "text",
+    "replacement",
+    "tool"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0"
+  },
+  "dependencies": {}
+}
